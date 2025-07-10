@@ -2,6 +2,11 @@
 
 ![PowerShell](https://img.shields.io/badge/PowerShell-5+-blue)
 
+## Install
+`Install-Script -Name Get-WindowsServerReleases`
+
+---
+
 ## Overview
 
 `Get-WindowsServerReleases.ps1` is a PowerShell script designed to retrieve and parse the **Windows Server release history** directly from Microsoft's official documentation page. It supports recent versions of Windows Server (2016 and newer) and uses local caching to minimize redundant web scraping.
@@ -9,19 +14,16 @@
 This tool is useful for:
 - System administrators monitoring patch and build releases
 - Automation of OS lifecycle reporting
-- DevOps engineers maintaining infrastructure visibility
 
 Screenshot:
 
 <img width="882" height="331" alt="image" src="https://github.com/user-attachments/assets/64300a73-070b-4555-b605-0ff17632901f" />
 
 
-Note: Yes - I know there is a [public API](https://learn.microsoft.com/en-us/graph/api/resources/windowsupdates-product?view=graph-rest-beta) with this data, and more, but you need a tenant and graph API auth in order to use it.
-
----
-
-## Install
-`Install-Script -Name Get-WindowsServerReleases`
+Remarks:
+ *  Yes - I know there is a [public API](https://learn.microsoft.com/en-us/graph/api/resources/windowsupdates-product?view=graph-rest-beta) with this data, and more, but you need a tenant and graph API auth in order to use it.
+ *  This script relies on consistent use of table id's and titles in Microsoft HTML-structure. Seems good :)
+ *  The script will need to be patched when the next OS comes in 2027 og 2028 something, and when 2016 is not longer updated. Easy fix with validate set in parameters.
 
 ---
 
