@@ -41,7 +41,7 @@ Remarks:
 
 | Parameter             | Type      | Description |
 |-----------------------|-----------|-------------|
-| `-WindowsServerVersion` | `string`  | (Optional) Filter output for a specific version: `Server 2016`, `Server 2019`, `Server 2022`, or `Server 2025`. |
+| `-WindowsServerVersion` | `string`  | (Optional) Filter output for a specific version: `Server 2016`, `Server 2019`, `Server 2022`, `Server 2025`. |
 | `-PathLocalStore`       | `string`  | Path to store local CSV cache. Defaults to script location. |
 | `-ForceRebuild`         | `switch`  | Forces a fresh web scrape and overwrites cached data regardless of age. |
 | `-VerboseLogging`       | `switch`  | Outputs progress and activity to the console. |
