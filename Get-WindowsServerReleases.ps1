@@ -1,5 +1,5 @@
 <#PSScriptInfo
-    .VERSION 1.0.0
+    .VERSION 1.0.1
     .GUID 857dbda9-4724-4c09-8969-8e2a576657ef
     .AUTHOR Erlend Westervik
     .COMPANYNAME
@@ -13,41 +13,58 @@
     .EXTERNALSCRIPTDEPENDENCIES
     .RELEASENOTES
         Version: 1.0.0 - Original published version
+        Version: 1.0.1 - Updated script metadata, examples etc to match GitHub readme.md made with help from AI
 
 #>
 
 <#
 .SYNOPSIS
-    Get Windows server release history
+    Get-WindowsServerReleases is a PowerShell script designed to retrieve and parse the Windows Server release history directly from Microsoft's official documentation page. It supports recent versions of Windows Server (2016 and newer) and uses local caching to minimize redundant web scraping.
 
 .DESCRIPTION
-    Explain the steps
+    1. Startup & Parameter Handling
+        * Validates version input and sets path defaults.
+        * If -ShowCache is used, it simply loads cached CSVs and exits.
+    
+    2. Web Scraping
+        * Downloads the release history page using Invoke-WebRequest.
+        * Parses HTML to extract tables by Windows Server version.
+    
+    3. Caching
+        * Cached files are stored per version as *.csv (semicolon-separated).
+        * Automatically reuses cache if it’s less than 24 hours old, unless -ForceRebuild is used.
+    
+    4. Output
+        * Returns a PowerShell object list representing the release information.
+        * Supports formatting (Format-Table, Out-GridView, etc.).
 
 .NOTES
-    1. Windows Server 2012 R2 or older OS are end-of-life (no longer extended support). Release history for these OS are no longer published, and is therefore not supported in this script. The data would be static.
-    2. There is a "public" API with this information and more, but it requires a M365 tenant to access + auth
-        - https://learn.microsoft.com/en-us/graph/api/resources/windowsupdates-product?view=graph-rest-beta
+    .
 
 .PARAMETER PathLocalStore
-    Specify path to save local cache of Windows server releases. Defaults to module/script location.
+    Path to store local CSV cache. Defaults to script location.
 
 .PARAMETER ForceRebuild
-    Re-creates the local CSV-files, regardless of how recent they are. By default, it uses the local cache if its less than one day old.
+    Forces a fresh web scrape and overwrites cached data regardless of age.
 
 .PARAMETER VerboseLogging
-    Show activity in console
+    Outputs progress and activity to the console.
 
 .EXAMPLE
+    # Show all server versions in a grid view
     .\Get-WindowsServerReleases.ps1 | Out-GridView
 
 .EXAMPLE
+    # Get releases for Server 2025 with verbose logging
     .\Get-WindowsServerReleases.ps1 -WindowsServerVersion 'Server 2025' -VerboseLogging | Format-Table
 
 .EXAMPLE
-    .\Get-WindowsServerReleases.ps1 -WindowsServerVersion 'Server 2016' | Format-Table
+    # Rebuild and get info for Server 2019
+    .\Get-WindowsServerReleases.ps1 -WindowsServerVersion 'Server 2019' | Format-Table
 
 .EXAMPLE
-    .\Get-WindowsServerReleases.ps1 -WindowsServerVersion -ForceRebuild
+    # Display cached data without fetching new content
+    .\Get-WindowsServerReleases.ps1 -ShowCache
 
 #>
 
