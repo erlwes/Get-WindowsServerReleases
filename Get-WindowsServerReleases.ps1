@@ -1,10 +1,10 @@
 <#PSScriptInfo
-    .VERSION 1.0.1
+    .VERSION 1.0.4
     .GUID 857dbda9-4724-4c09-8969-8e2a576657ef
     .AUTHOR Erlend Westervik
     .COMPANYNAME
     .COPYRIGHT
-    .TAGS Windows, Server, Update, Patch, Upgrade, Operating System, OS, Win, Release, Version, Servicing, LTSC, AC, Lifecycle, Build, OOB
+    .TAGS Microsoft, Windows, Server, Update, Patch, Lifecycle, Operating, System, OS, Release, Version, Servicing, LTSC, AC, Build, Sysadm
     .LICENSEURI
     .PROJECTURI https://github.com/erlwes/Get-WindowsServerReleases
     .ICONURI
@@ -13,7 +13,8 @@
     .EXTERNALSCRIPTDEPENDENCIES
     .RELEASENOTES
         Version: 1.0.0 - Original published version
-        Version: 1.0.1 - Updated script metadata, examples etc to match GitHub readme.md made with help from AI
+        Version: 1.0.3 - Updated script metadata, examples etc to match GitHub readme.md made with help from AI
+        Version: 1.0.4 - Changed default dir for local store to PowerShell profilefolder in a new dir called 'Lookups'. Same as my other lookup-scripts.
 
 #>
 
@@ -22,21 +23,7 @@
     Get-WindowsServerReleases is a PowerShell script designed to retrieve and parse the Windows Server release history directly from Microsoft's official documentation page. It supports recent versions of Windows Server (2016 and newer) and uses local caching to minimize redundant web scraping.
 
 .DESCRIPTION
-    1. Startup & Parameter Handling
-        * Validates version input and sets path defaults.
-        * If -ShowCache is used, it simply loads cached CSVs and exits.
-    
-    2. Web Scraping
-        * Downloads the release history page using Invoke-WebRequest.
-        * Parses HTML to extract tables by Windows Server version.
-    
-    3. Caching
-        * Cached files are stored per version as *.csv (semicolon-separated).
-        * Automatically reuses cache if it’s less than 24 hours old, unless -ForceRebuild is used.
-    
-    4. Output
-        * Returns a PowerShell object list representing the release information.
-        * Supports formatting (Format-Table, Out-GridView, etc.).
+    Get-WindowsServerReleases is a PowerShell script designed to retrieve and parse the Windows Server release history directly from Microsoft's official documentation page. It supports recent versions of Windows Server (2016 and newer) and uses local caching to minimize redundant web scraping.
 
 .NOTES
     .
@@ -72,7 +59,7 @@ Param(
     [ValidateSet('Server 2025', 'Server 2022', 'Server 2019', 'Server 2016')]
     [String]$WindowsServerVersion,
 
-    [String]$PathLocalStore = $PSScriptRoot,
+    [String]$PathLocalStore = "$(($profile | Split-Path))\Lookups",
 
     [Switch]$VerboseLogging,
 
@@ -98,7 +85,7 @@ function ParseHtml($string) {
     $html
 }
 
- Function Write-Log {
+Function Write-Console {
     param(
         [ValidateSet(0, 1, 2, 3, 4)]
         [int]$Level,
@@ -108,12 +95,12 @@ function ParseHtml($string) {
     )
     $Message = $Message.Replace("`r",'').Replace("`n",' ')
     switch ($Level) {
-        0 { $Status = 'Info'    ;$FGColor = 'White'   }
-        1 { $Status = 'Success' ;$FGColor = 'Green'   }
-        2 { $Status = 'Warning' ;$FGColor = 'Yellow'  }
-        3 { $Status = 'Error'   ;$FGColor = 'Red'     }
-        4 { $Status = 'Console' ;$FGColor = 'Gray'    }
-        Default { $Status = ''  ;$FGColor = 'Black'   }
+        0 { $Status = 'Info'        ;$FGColor = 'White'   }
+        1 { $Status = 'Success'     ;$FGColor = 'Green'   }
+        2 { $Status = 'Warning'     ;$FGColor = 'Yellow'  }
+        3 { $Status = 'Error'       ;$FGColor = 'Red'     }
+        4 { $Status = 'Highlight'   ;$FGColor = 'Gray'    }
+        Default { $Status = ''      ;$FGColor = 'Black'   }
     }
     if ($VerboseLogging) {
         Write-Host "$((Get-Date).ToString()) " -ForegroundColor 'DarkGray' -NoNewline
@@ -131,11 +118,34 @@ function ParseHtml($string) {
     }
 }
 
-Write-Log -Level 0 -Message "Start"
-Write-Log -Level 0 -Message "Local cache - Using '$PathLocalStore' as local store"
+function New-DirectoryIfNotExist {
+    param([string]$Path)
+
+    # Removes filename from path
+    if ([System.IO.Path]::HasExtension($Path)) {
+        $Path = [System.IO.Path]::GetDirectoryName($Path)
+    }
+
+    # Create directory if it doesn't exist
+    if (!(Test-Path $Path)) {
+        try {
+            New-Item -ItemType Directory -Path $Path -ErrorAction Stop | Out-Null
+            Write-Console -Level 1 -Message "New-Item - Directory creted: '$Path'"
+        }
+        catch {
+            Write-Console -Level 3 -Message "New-Item - Failed to create new directory '$Path'. Error: $($_.Exception.Message)"
+        }
+    }
+}
+
+Write-Console -Level 0 -Message "Start"
+
+#Create directory from -PathLocalStore parameter if non-existing
+Write-Console -Level 0 -Message "Local cache - Using '$PathLocalStore' as local store"
+New-DirectoryIfNotExist -Path $PathLocalStore
 
 if ($ShowCache) {
-    Write-Log -Level 0 -Message "Local cache - Parameter -ShowCache used. Looking for existing CSV-cacge in this path: '$PathLocalStore'."
+    Write-Console -Level 0 -Message "Local cache - Parameter -ShowCache used. Looking for existing CSV-cache in this path: '$PathLocalStore'."
     $Cache = @()
     if ($WindowsServerVersion) {
         $CSVFiles = Get-Item -Path "$PathLocalStore\Windows $WindowsServerVersion (OS build*.csv"    
@@ -145,50 +155,50 @@ if ($ShowCache) {
     }
     
     if ($CSVFiles.count -ge 1) {
-        Write-Log -Level 1 -Message "Local cache - $($CSVFiles.count) CSV-files found."
+        Write-Console -Level 1 -Message "Local cache - $($CSVFiles.count) CSV-files found."
         Foreach ($File in $CSVFiles) {
             $Cache += Import-Csv -Path $File.FullName -Delimiter ';' -Encoding utf8
         }
         $Cache
     }
     else {
-        Write-Log -Level 0 -Message "Local cache - Not found  (while using -ShowCache). Can not continue."
+        Write-Console -Level 0 -Message "Local cache - Not found  (while using -ShowCache). Can not continue."
     }
-    Write-Log -Level 0 -Message "End"
+    Write-Console -Level 0 -Message "End"
     Break
 }
 else {
     # WEB REQUEST
     $WR = Invoke-WebRequest -Uri 'https://learn.microsoft.com/en-us/windows/release-health/windows-server-release-info'
     if ($WR.StatusCode -eq 200) {
-        Write-Log -Level 1 -Message 'Invoke-WebRequest - Status 200. Content received.'
+        Write-Console -Level 1 -Message 'Invoke-WebRequest - Status 200. Content received.'
     }
     else {
-        Write-Log -Level 3 -Message "Invoke-WebRequest - Status $($WR.StatusCode)"
+        Write-Console -Level 3 -Message "Invoke-WebRequest - Status $($WR.StatusCode)"
     }
 
     # HIGH LEVEL PARSING - TABLES + HEADERS
     if ($host.version.Major -gt 5) {
-        Write-Log -Level 0 -Message "Parse HTML - PowerShell Core detected ($($host.version.Major).$($host.version.Minor)). Parsing HTML using 'ParseHTLM function'"
+        Write-Console -Level 0 -Message "Parse HTML - PowerShell Core detected ($($host.version.Major).$($host.version.Minor)). Parsing HTML using 'ParseHTLM function'"
         $Document = ParseHtml $WR.Content
         $Tables = $Document.getElementsByTagName('table') | Where-Object {$_.id -match 'historyTable'}
         $ServerOSTitles = $Document.getElementsByTagName('strong') | Where-Object {$_.innerText -match 'Windows Server'} | Select-Object -ExpandProperty innerText -Unique
     }
     else {
-        Write-Log -Level 0 -Message "Parse HTML - Windows PowerShell detected ($($host.version.Major).$($host.version.Minor)). Using built in 'parsedHtml'"
+        Write-Console -Level 0 -Message "Parse HTML - Windows PowerShell detected ($($host.version.Major).$($host.version.Minor)). Using built in 'parsedHtml'"
         $Tables = $WR.ParsedHtml.getElementsByTagName('table') | Where-Object {$_.id -match 'historyTable'}
         $ServerOSTitles = $WR.ParsedHtml.getElementsByTagName('strong') |  Where-Object {$_.IHTMLElement_innerText -match 'Windows Server'} | Select-Object -ExpandProperty IHTMLElement_innerText -Unique 
     }
-    Write-Log -Level 0 -Message "Parse HTML - Found $($Tables.count) relevant tables"
-    Write-Log -Level 0 -Message "Parse HTML - Found $($ServerOSTitles.count) relevant headers"
+    Write-Console -Level 0 -Message "Parse HTML - Found $($Tables.count) relevant tables"
+    Write-Console -Level 0 -Message "Parse HTML - Found $($ServerOSTitles.count) relevant headers"
 
     # SANITY CHECKS ON RESULTS
     if ($Tables.count -lt 1 -or $ServerOSTitles.count -lt 1) {
-        Write-Log -Level 2 -Message 'Parse HTML - Missing headers and/or titles. Can not continue.'
+        Write-Console -Level 2 -Message 'Parse HTML - Missing headers and/or titles. Can not continue.'
         Break
     }
     if ($Tables.count -ne $ServerOSTitles.count) {
-        Write-Log -Level 2 -Message 'Parse HTML - In-equal count of headers vs. tables. Will not continue.'
+        Write-Console -Level 2 -Message 'Parse HTML - In-equal count of headers vs. tables. Will not continue.'
         Break
     }
 
@@ -222,19 +232,19 @@ else {
             $ServerOSTitle = $_
             $CSVFile = "$PathLocalStore\$ServerOSTitle.csv"
             if (Test-Path $CSVFile) {
-                Write-Log -Level 1 -Message "Check cache - $ServerOSTitle - File exist ('$CSVFile')"
+                Write-Console -Level 1 -Message "Check cache - $ServerOSTitle - File exist ('$CSVFile')"
                 [datetime]$FileDate = Get-Item -Path $CSVFile | Select-Object -ExpandProperty LastWriteTime
                 $TimeDiff = ($Time - $FileDate)
                 if ($TimeDiff.TotalHours -ge 24) {
-                    Write-Log -Level 2 -Message "Check cache date - $ServerOSTitle - Older than 24h ($($TimeDiff.TotalHours)). Setting '-ForceRebuild' switch."
+                    Write-Console -Level 2 -Message "Check cache date - $ServerOSTitle - Older than 24h ($($TimeDiff.TotalHours)). Setting '-ForceRebuild' switch."
                     $ForceRebuild = $true
                 }
                 else {
-                    Write-Log -Level 1 -Message "Check cache date - $ServerOSTitle - More recent than 24h ($($TimeDiff.TotalHours))."
+                    Write-Console -Level 1 -Message "Check cache date - $ServerOSTitle - More recent than 24h ($($TimeDiff.TotalHours))."
                 }
             }
             else {
-                Write-Log -Level 2 -Message "Check cache - $ServerOSTitle - No file ('$CSVFile'). Setting '-ForceRebuild' switch."
+                Write-Console -Level 2 -Message "Check cache - $ServerOSTitle - No file ('$CSVFile'). Setting '-ForceRebuild' switch."
                 $ForceRebuild = $true
             }
             Clear-Variable ServerOSTitle, CSVFile
@@ -253,7 +263,7 @@ else {
             $Index = [int]($Table.id -replace '^.+_')
             $ServerTitle = $ServerOSTitles[$Index]
 
-            Write-Log -Level 0 -Message "Convert HTML to PSObject - $ServerTitle - Begin"
+            Write-Console -Level 0 -Message "Convert HTML to PSObject - $ServerTitle - Begin"
             $M = Measure-Command {        
                 $Object = [System.Collections.Generic.List[object]]::new()
 
@@ -275,11 +285,11 @@ else {
                     $Object.Add([PSCustomObject]$RowHash)
                 }
             }
-            Write-Log -Level 0 -Message "Convert HTML to PSObject - $ServerTitle - Done in $($M.TotalSeconds) seconds ($($Object.Count) releases)"
+            Write-Console -Level 0 -Message "Convert HTML to PSObject - $ServerTitle - Done in $($M.TotalSeconds) seconds ($($Object.Count) releases)"
 
             #Sanity checks before saving and poteltially overwriting last cache
             if ($Object.Build -notmatch '\d') {
-                Write-Log -Level 3 -Message "Convert HTML to PSObject - $ServerTitle - The produced PSObject is not valid. Build-property is not present or has invalid values. Aborting script."
+                Write-Console -Level 3 -Message "Convert HTML to PSObject - $ServerTitle - The produced PSObject is not valid. Build-property is not present or has invalid values. Aborting script."
                 Break
             }
 
@@ -287,10 +297,10 @@ else {
             try {
                 $Object | Export-Csv "$PathLocalStore\$ServerTitle.csv" -Delimiter ';' -Encoding utf8 -Confirm:$false -Force -ErrorAction Stop
                 $Result += $Object
-                Write-Log -Level 1 -Message "Export-Csv - Saved '$PathLocalStore\$ServerTitle.csv'"
+                Write-Console -Level 1 -Message "Export-Csv - Saved '$PathLocalStore\$ServerTitle.csv'"
             }
             catch {
-                Write-Log -Level 3 -Message "Export-Csv - Failed to save '$PathLocalStore\$ServerTitle.csv'. Error: $($_.Exception.Message)"
+                Write-Console -Level 3 -Message "Export-Csv - Failed to save '$PathLocalStore\$ServerTitle.csv'. Error: $($_.Exception.Message)"
             }
             
             # Clear variables for next table in loop
@@ -303,6 +313,6 @@ else {
             $Result += Import-Csv -Path $_ -Delimiter ';' -Encoding utf8
         }
     }
-    Write-Log -Level 0 -Message "End"
+    Write-Console -Level 0 -Message "End"
     $Result
 }
