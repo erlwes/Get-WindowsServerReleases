@@ -30,7 +30,7 @@ Get-WindowsServerReleases.ps1 -WindowsServerVersion 'Server 2025' | Format-Table
 -  Web scraping from [Microsoft Docs](https://learn.microsoft.com/en-us/windows/release-health/windows-server-release-info)
 -  Caches results in offline CSV-files and reuses results intra day (re-downloads if older than 1 day)
 -  Compatible with Windows PowerShell and PowerShell Core
--  Does not require a tentant and graph auth, like the official API
+-  Does not require a tentant and graph auth, like when using [official API](https://learn.microsoft.com/en-us/graph/api/resources/windowsupdates-product?view=graph-rest-beta)
 
 ---
 
