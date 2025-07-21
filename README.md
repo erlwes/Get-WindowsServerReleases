@@ -16,7 +16,7 @@ Install-Script -Name Get-WindowsServerReleases
 ## 🚀 Quickstart
 
 ```powershell
-.\Get-WindowsServerReleases.ps1 -WindowsServerVersion 'Server 2025' | Format-Table
+Get-WindowsServerReleases.ps1 -WindowsServerVersion 'Server 2025' | Format-Table
 ```
 
 <img width="882" height="331" alt="image" src="https://github.com/user-attachments/assets/64300a73-070b-4555-b605-0ff17632901f" />
@@ -49,20 +49,20 @@ Install-Script -Name Get-WindowsServerReleases
 
 ### `All supported server versions to GridView`
 ```powershell
-.\Get-WindowsServerReleases.ps1 | Out-GridView
+Get-WindowsServerReleases.ps1 | Out-GridView
 ```
 
 ### `Releases for Server 2022 with verbose logging`
 ```powershell
-.\Get-WindowsServerReleases.ps1 -WindowsServerVersion 'Server 2022' -VerboseLogging | Format-Table
+Get-WindowsServerReleases.ps1 -WindowsServerVersion 'Server 2022' -VerboseLogging | Format-Table
 ```
 
 ### `Force re-download/build of local cache`
 ```powershell
-.\Get-WindowsServerReleases.ps1 -ForceRebuild
+Get-WindowsServerReleases.ps1 -ForceRebuild
 ```
 
 ### `Display cached data without checking age or online content`
 ```powershell
-.\Get-WindowsServerReleases.ps1 -ShowCache
+Get-WindowsServerReleases.ps1 -ShowCache
 ```
