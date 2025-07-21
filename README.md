@@ -1,4 +1,5 @@
 ![PowerShell](https://img.shields.io/badge/PowerShell-5+-blue)
+![PowerShell Gallery Downloads](https://img.shields.io/powershellgallery/dt/Get-WindowsServerReleases)
 
 # Get-WindowsServerReleases
 `Get-WindowsServerReleases.ps1` is a PowerShell script designed to retrieve and parse the **Windows Server release history** directly from Microsoft's official documentation page. It supports recent versions of Windows Server (2016 and newer) and uses local caching to minimize redundant web scraping.
