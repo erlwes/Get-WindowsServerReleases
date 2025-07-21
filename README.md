@@ -2,23 +2,16 @@
 
 ![PowerShell](https://img.shields.io/badge/PowerShell-5+-blue)
 
+`Get-WindowsServerReleases.ps1` is a PowerShell script designed to retrieve and parse the **Windows Server release history** directly from Microsoft's official documentation page. It supports recent versions of Windows Server (2016 and newer) and uses local caching to minimize redundant web scraping.
+
 ## Install
 `Install-Script -Name Get-WindowsServerReleases`
 
 ---
 
-## Overview
-
-`Get-WindowsServerReleases.ps1` is a PowerShell script designed to retrieve and parse the **Windows Server release history** directly from Microsoft's official documentation page. It supports recent versions of Windows Server (2016 and newer) and uses local caching to minimize redundant web scraping.
-
-This tool is useful for:
-- System administrators monitoring patch and build releases
-- Automation of OS lifecycle reporting
-
 Screenshot:
 
 <img width="882" height="331" alt="image" src="https://github.com/user-attachments/assets/64300a73-070b-4555-b605-0ff17632901f" />
-
 
 Remarks:
  *  Yes - I know there is a [public API](https://learn.microsoft.com/en-us/graph/api/resources/windowsupdates-product?view=graph-rest-beta) with this data, and more, but you need a tenant and graph API auth in order to use it.
