@@ -4,6 +4,8 @@
 # Get-WindowsServerReleases
 `Get-WindowsServerReleases.ps1` is a PowerShell script designed to retrieve and parse the **Windows Server release history** directly from Microsoft's official documentation page. It supports recent versions of Windows Server (2016 and newer) and uses local caching to minimize redundant web scraping.
 
+Useful for sysadmins who need to verify that their servers have the latest builds installed — especially in environments where centralized tools aren't used or don't clearly show update status.
+
 ## 📦 Installation
 
 Install the module from PowerShell Gallery:
