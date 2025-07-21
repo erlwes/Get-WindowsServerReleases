@@ -148,10 +148,10 @@ if ($ShowCache) {
     Write-Console -Level 0 -Message "Local cache - Parameter -ShowCache used. Looking for existing CSV-cache in this path: '$PathLocalStore'."
     $Cache = @()
     if ($WindowsServerVersion) {
-        $CSVFiles = Get-Item -Path "$PathLocalStore\Windows $WindowsServerVersion (OS build*.csv"    
+        $CSVFiles = Get-Item -Path "$PathLocalStore\Windows $WindowsServerVersion (OS build*.csv"
     }
     else {
-        $CSVFiles = Get-Item -Path "$PathLocalStore\Windows Server * (OS build*.csv"    
+        $CSVFiles = Get-Item -Path "$PathLocalStore\Windows Server*.csv"
     }
     
     if ($CSVFiles.count -ge 1) {
