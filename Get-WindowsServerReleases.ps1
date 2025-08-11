@@ -1,5 +1,5 @@
 <#PSScriptInfo
-    .VERSION 1.0.4
+    .VERSION 1.0.5
     .GUID 857dbda9-4724-4c09-8969-8e2a576657ef
     .AUTHOR Erlend Westervik
     .COMPANYNAME
@@ -15,6 +15,7 @@
         Version: 1.0.0 - Original published version
         Version: 1.0.3 - Updated script metadata, examples etc to match GitHub readme.md made with help from AI
         Version: 1.0.4 - Changed default dir for local store to PowerShell profilefolder in a new dir called 'Lookups'. Same as my other lookup-scripts.
+        Version: 1.0.5 - Redownload if local cache is older than 1h, not 24h
 
 #>
 
@@ -64,6 +65,8 @@ Param(
     [Switch]$VerboseLogging,
 
     [Switch]$ForceRebuild,
+
+    [Switch]$LatestOnly,
 
     [Switch]$ShowCache
 )
@@ -151,7 +154,7 @@ if ($ShowCache) {
         $CSVFiles = Get-Item -Path "$PathLocalStore\Windows $WindowsServerVersion (OS build*.csv"
     }
     else {
-        $CSVFiles = Get-Item -Path "$PathLocalStore\Windows Server*.csv"
+        $CSVFiles = Get-Item -Path "$PathLocalStore\Windows Server * (OS build*.csv"
     }
     
     if ($CSVFiles.count -ge 1) {
@@ -235,12 +238,12 @@ else {
                 Write-Console -Level 1 -Message "Check cache - $ServerOSTitle - File exist ('$CSVFile')"
                 [datetime]$FileDate = Get-Item -Path $CSVFile | Select-Object -ExpandProperty LastWriteTime
                 $TimeDiff = ($Time - $FileDate)
-                if ($TimeDiff.TotalHours -ge 24) {
-                    Write-Console -Level 2 -Message "Check cache date - $ServerOSTitle - Older than 24h ($($TimeDiff.TotalHours)). Setting '-ForceRebuild' switch."
+                if ($TimeDiff.TotalHours -ge 1) {
+                    Write-Console -Level 2 -Message "Check cache date - $ServerOSTitle - Older than 1h ($($TimeDiff.TotalHours)). Setting '-ForceRebuild' switch."
                     $ForceRebuild = $true
                 }
                 else {
-                    Write-Console -Level 1 -Message "Check cache date - $ServerOSTitle - More recent than 24h ($($TimeDiff.TotalHours))."
+                    Write-Console -Level 1 -Message "Check cache date - $ServerOSTitle - More recent than 1h ($($TimeDiff.TotalHours))."
                 }
             }
             else {
@@ -295,8 +298,14 @@ else {
 
             # Export to CSV (save cache)
             try {
-                $Object | Export-Csv "$PathLocalStore\$ServerTitle.csv" -Delimiter ';' -Encoding utf8 -Confirm:$false -Force -ErrorAction Stop
-                $Result += $Object
+                $Object | Export-Csv "$PathLocalStore\$ServerTitle.csv" -Delimiter ';' -Encoding utf8 -Confirm:$false -Force -ErrorAction Stop                
+
+                if ($LatestOnly) {
+                    $Result += $Object | Sort-Object "Availability date" | Select-Object -Last 1
+                }
+                else {
+                    $Result += $Object
+                }
                 Write-Console -Level 1 -Message "Export-Csv - Saved '$PathLocalStore\$ServerTitle.csv'"
             }
             catch {
@@ -308,9 +317,14 @@ else {
         }
     }
     else {
-        # If all needed caches are newer than 24h, just import the cache and present the data.
+        # If all needed caches are newer than 1h, just import the cache and present the data.
         $CSVFiles | ForEach-Object {
-            $Result += Import-Csv -Path $_ -Delimiter ';' -Encoding utf8
+            if($LatestOnly) {
+                $Result += (Import-Csv -Path $_ -Delimiter ';' -Encoding utf8) | Sort-Object "Availability date" | Select-Object -Last 1
+            }
+            else {
+                $Result += Import-Csv -Path $_ -Delimiter ';' -Encoding utf8
+            }
         }
     }
     Write-Console -Level 0 -Message "End"
